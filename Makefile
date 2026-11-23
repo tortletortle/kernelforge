@@ -47,6 +47,7 @@ test-sim:
 	node test-v3.mjs
 	node test-v4.mjs
 	node test-v5.mjs
+	node test-viewer.mjs
 
 test: test-python test-sim
 
