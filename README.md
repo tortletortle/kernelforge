@@ -30,3 +30,8 @@ A first eBPF/libbpf observer prototype is available under `bpf/`, `src/linux_obs
 See [Linux observer build and validation](docs/linux-observer.md). The BPF source has not yet been compiled or attached on the target Linux host; treat it as an implementation candidate pending build and runtime validation.
 
 Python analyzer tests: `python3 -m unittest discover -s tests -v`.
+
+
+## Offline trace viewer
+
+Open `web/trace-viewer.html` in a browser and import the JSONL emitted by the read-only observer. The built-in demo is synthetic and explicitly labeled. See [viewer semantics](docs/trace-viewer.md). It reconstructs approximate per-CPU run slices from adjacent switch events; incomplete trace boundaries and continuity gaps are marked rather than treated as exact runtime data.
