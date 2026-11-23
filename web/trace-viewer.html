@@ -82,7 +82,8 @@ function parseTrace(text){
 function buildModel(records){
  const switches=records.filter(r=>r.type==="switch").sort((a,b)=>Number(a.ts_ns)-Number(b.ts_ns));
  const wakeups=records.filter(r=>r.type==="wakeup");
- const summary=records.filter(r=>r.type==="summary").reduce((a,r)=>({events:a.events+Number(r.events||0),dropped:a.dropped+Number(r.dropped||0),mapErrors:a.mapErrors+Number(r.map_update_failures||0)}),{events:0,dropped:0,mapErrors:0});
+ const summaryRecords=records.filter(r=>r.type==="summary");
+ const summary=summaryRecords.reduce((a,r)=>({events:a.events+Number(r.events||0),dropped:a.dropped+Number(r.dropped||0),mapErrors:a.mapErrors+Number(r.map_update_failures||0)}),{events:0,dropped:0,mapErrors:0});
  const byCpu=new Map(),segments=[],proc=new Map(),latencies=[],cpuSet=new Set();
  let minTs=Infinity,maxTs=-Infinity,mismatches=0;
  for(const e of switches){const cpu=Number(e.cpu);cpuSet.add(cpu);const ts=Number(e.ts_ns);minTs=Math.min(minTs,ts);maxTs=Math.max(maxTs,ts);
@@ -93,15 +94,16 @@ function buildModel(records){
  }
  for(const active of byCpu.values()){const duration=Math.max(0,maxTs-active.start);if(duration>0){segments.push({...active,end:maxTs,duration,broken:false,tail:true});const p=proc.get(String(active.pid));if(p)p.runtime+=duration;}}
  const processes=[...proc.values()].map(p=>({...p,p95:quantile(p.latencies,.95),maxLatency:p.latencies.length?Math.max(...p.latencies):null})).sort((a,b)=>b.runtime-a.runtime);
- return {switches,wakeups,summary,segments,processes,latencies,cpuCount:cpuSet.size,minTs,maxTs,mismatches};
+ return {switches,wakeups,summary,summaryPresent:summaryRecords.length>0,segments,processes,latencies,cpuCount:cpuSet.size,minTs,maxTs,mismatches};
 }
 function updateMetrics(model){
  $("switchCount").textContent=model.switches.length.toLocaleString();
  $("p95Latency").textContent=fmtNs(quantile(model.latencies,.95));
- $("droppedCount").textContent=model.summary.dropped.toLocaleString();
+ $("droppedCount").textContent=model.summaryPresent?model.summary.dropped.toLocaleString():"未知";
+ $("droppedCount").className="metric-value "+(model.summaryPresent&&model.summary.dropped===0?"green":"amber");
  $("cpuCount").textContent=model.cpuCount.toString();
  $("timelineSub").textContent=model.switches.length+" 次切换 · "+model.wakeups.length+" 次唤醒 · 时间跨度 "+fmtNs(model.maxTs-model.minTs);
- $("footerStatus").textContent="schema v1 · "+model.segments.length+" reconstructed CPU slices · "+model.mismatches+" continuity mismatches · map update failures "+model.summary.mapErrors;
+ $("footerStatus").textContent="schema v1 · "+model.segments.length+" reconstructed CPU slices · "+model.mismatches+" continuity mismatches · "+(model.summaryPresent?("ring drops "+model.summary.dropped+" · map update failures "+model.summary.mapErrors):"summary missing: drop counters unknown");
 }
 function renderTable(){
  const body=$("processRows");body.replaceChildren();const q=$("filterInput").value.trim().toLowerCase();
