@@ -21,3 +21,12 @@ This is not a real Linux kernel, eBPF program or livepatch engine. No claims abo
 ## Next milestone
 
 Separate workload generator and benchmark harness; add workload families, load sweeps, overhead modeling, state snapshots, randomized switching and adversarial cases before introducing visual or real-kernel integration.
+
+
+## V0.6: read-only Linux scheduler observer
+
+A first eBPF/libbpf observer prototype is available under `bpf/`, `src/linux_observer.c`, and `include/`. It captures scheduler wakeup/switch events, emits JSONL, and analyzes wake-to-run latency. It is observational only: it does not change scheduling policy or patch the kernel.
+
+See [Linux observer build and validation](docs/linux-observer.md). The BPF source has not yet been compiled or attached on the target Linux host; treat it as an implementation candidate pending build and runtime validation.
+
+Python analyzer tests: `python3 -m unittest discover -s tests -v`.
