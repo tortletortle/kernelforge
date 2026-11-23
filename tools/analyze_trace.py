@@ -19,13 +19,14 @@ def analyze_records(records):
     cpu_switches = Counter()
     latency_by_pid = defaultdict(list)
     latencies = []
-    summary = {"events": 0, "dropped": 0}
+    summary = {"events": 0, "dropped": 0, "map_update_failures": 0}
 
     for record in records:
         kind = record.get("type")
         if kind == "summary":
             summary["events"] += int(record.get("events", 0))
             summary["dropped"] += int(record.get("dropped", 0))
+            summary["map_update_failures"] += int(record.get("map_update_failures", 0))
             continue
         event_counts[kind] += 1
         if kind == "switch":
@@ -43,6 +44,7 @@ def analyze_records(records):
         "event_counts": dict(event_counts),
         "switches_by_cpu": dict(cpu_switches),
         "ring_buffer_dropped": dropped,
+        "wakeup_map_update_failures": summary["map_update_failures"],
         "summary_reported_events": summary["events"],
         "observed_event_records": observed,
         "estimated_drop_fraction": (dropped / (dropped + observed)) if dropped + observed else None,
@@ -62,8 +64,8 @@ def analyze_records(records):
             reverse=True,
         )[:10],
         "warning": (
-            "Incomplete trace: ring-buffer drops were reported."
-            if dropped else
+            "Incomplete trace: ring-buffer drops or wakeup-map update failures were reported."
+            if dropped or summary["map_update_failures"] else
             "No ring-buffer drops reported; this does not prove system-wide trace completeness."
         ),
     }
