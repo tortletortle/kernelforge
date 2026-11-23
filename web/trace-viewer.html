@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KernelForge · Scheduler Trace Workbench</title>
+<style>
+:root{color-scheme:dark;--bg:#090e18;--panel:#101a2a;--panel2:#0c1523;--line:#1d2a3e;--muted:#8393aa;--text:#e8eef8;--cyan:#5bd6e8;--blue:#6f9cff;--green:#65d6a3;--amber:#f0bd68;--red:#ff7c88}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1000px 500px at 65% -10%,#182c48 0%,transparent 60%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#17253a;color:var(--text);border-radius:8px;padding:9px 13px}button:hover{border-color:#42617f;background:#1b3049}.primary{background:#1a7185;border-color:#258da2}.primary:hover{background:#21869b}.shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+.sidebar{border-right:1px solid var(--line);background:#0a111d;padding:22px 14px;display:flex;flex-direction:column;gap:24px}.brand{display:flex;align-items:center;gap:11px;padding:0 8px}.brand-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#50d4e8,#4778db);display:grid;place-items:center;color:#07111e;font-weight:900}.brand strong{font-size:15px;letter-spacing:.08em}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.12em}.nav-label{color:#64748b;font-size:10px;letter-spacing:.14em;padding:0 10px;margin-bottom:8px}.nav-item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;color:#94a4ba;margin:2px 0}.nav-item.active{background:#142b40;color:#eafaff;border:1px solid #23465c}.nav-icon{width:18px;text-align:center;color:var(--cyan)}.sidebar-foot{margin-top:auto;border-top:1px solid var(--line);padding:14px 8px;color:#71829a;font-size:11px}.side-status{display:flex;align-items:center;gap:8px;margin-bottom:8px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #65d6a366}
+main{min-width:0;padding:28px clamp(18px,3vw,42px) 40px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:25px}.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:.16em;text-transform:uppercase}.topbar h1{font-size:25px;margin:3px 0 4px;letter-spacing:-.03em}.sub{color:var(--muted);font-size:12px}.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.file-label{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#17253a;color:var(--text);border-radius:8px;padding:9px 13px;cursor:pointer}.file-label:hover{border-color:#42617f}.file-label input{display:none}
+.notice{display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid #624d2b;background:#211b12;color:#e9c88d;border-radius:9px;margin-bottom:17px;font-size:12px}.notice.hidden{display:none}.notice b{color:#ffe0a5}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.metric,.panel{background:linear-gradient(160deg,#111e30,#0e1726);border:1px solid var(--line);border-radius:12px}.metric{padding:15px 17px}.metric-label{color:var(--muted);font-size:11px}.metric-value{font-size:24px;font-weight:650;letter-spacing:-.04em;margin:5px 0 2px}.metric-note{font-size:10px;color:#71839b}.accent{color:var(--cyan)}.green{color:var(--green)}.amber{color:var(--amber)}
+.panel{padding:17px 18px;margin-bottom:15px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px}.panel-title{font-weight:650;font-size:13px}.panel-sub{color:var(--muted);font-size:10px;margin-top:2px}.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:10px}.legend span{display:flex;align-items:center;gap:5px}.swatch{width:8px;height:8px;border-radius:2px;background:var(--cyan)}
+.timeline-wrap{position:relative;overflow-x:auto}.timeline{display:block;width:100%;min-width:560px;height:280px}.tooltip{position:absolute;display:none;pointer-events:none;background:#07111e;border:1px solid #35516c;padding:8px 10px;border-radius:7px;color:#dceafa;font-size:11px;z-index:3;box-shadow:0 8px 28px #0008;white-space:nowrap}
+.controls{display:flex;align-items:center;gap:9px}.search{background:#0b1421;border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:var(--text);width:180px;outline:none}.search:focus{border-color:#397b91}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:left;color:#8293aa;font-size:10px;font-weight:550;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--line)}td{padding:10px;border-bottom:1px solid #1a2738;font-size:11px;color:#c7d4e5}tr:last-child td{border-bottom:0}.pid{font-family:ui-monospace,monospace;color:var(--cyan)}.empty{text-align:center;color:var(--muted);padding:30px 12px}
+.footer{color:#60718a;font-size:10px;text-align:right;padding:4px 2px}
+@media(max-width:900px){.shell{grid-template-columns:68px minmax(0,1fr)}.sidebar{padding:18px 9px}.brand{justify-content:center;padding:0}.brand-copy,.nav-label,.nav-text,.sidebar-foot .foot-copy{display:none}.nav-item{justify-content:center;padding:12px 5px}.nav-icon{font-size:17px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){main{padding:18px 12px 28px}.topbar{align-items:flex-start;flex-direction:column}.topbar h1{font-size:21px}.metrics{gap:8px}.metric{padding:12px}.metric-value{font-size:20px}.panel{padding:13px}.controls{width:100%}.search{width:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">K</div><div class="brand-copy"><strong>KERNELFORGE</strong><small>OS RESEARCH LAB</small></div></div>
+  <div>
+    <div class="nav-label">OBSERVABILITY</div>
+    <div class="nav-item active"><span class="nav-icon">◫</span><span class="nav-text">调度观测中心</span></div>
+    <div class="nav-item"><span class="nav-icon">▦</span><span class="nav-text">内存拓扑</span></div>
+    <div class="nav-item"><span class="nav-icon">⇄</span><span class="nav-text">并发与锁</span></div>
+    <div class="nav-item"><span class="nav-icon">⌁</span><span class="nav-text">事件时间线</span></div>
+  </div>
+  <div>
+    <div class="nav-label">EXPERIMENTS</div>
+    <div class="nav-item"><span class="nav-icon">◉</span><span class="nav-text">算法对照</span></div>
+    <div class="nav-item"><span class="nav-icon">⌘</span><span class="nav-text">AI 架构师</span></div>
+  </div>
+  <div class="sidebar-foot"><div class="side-status"><span class="dot"></span><span class="foot-copy">本地文件分析模式</span></div><div class="foot-copy">KernelForge · V0.6</div><div class="foot-copy">Read-only observer</div></div>
+</aside>
+<main>
+  <header class="topbar">
+    <div><div class="eyebrow">KERNEL TELEMETRY / TRACE REPLAY</div><h1>调度观测中心</h1><div class="sub">从真实内核事件重建 CPU 执行轨迹 · 离线分析，不修改调度行为</div></div>
+    <div class="actions">
+      <label class="file-label">↑ 导入 JSONL<input id="fileInput" type="file" accept=".jsonl,.log,.txt,application/json"></label>
+      <button class="primary" id="demoButton">载入演示数据</button>
+      <button id="clearButton">清空</button>
+    </div>
+  </header>
+  <div class="notice" id="demoNotice"><b>演示模式</b><span>当前数据为合成样本，仅用于检查界面和分析流程，不代表真实 Linux 性能。</span></div>
+  <section class="metrics">
+    <div class="metric"><div class="metric-label">上下文切换事件</div><div class="metric-value accent" id="switchCount">—</div><div class="metric-note">sched_switch records</div></div>
+    <div class="metric"><div class="metric-label">唤醒至运行 P95</div><div class="metric-value" id="p95Latency">—</div><div class="metric-note">matched wakeup → switch-in</div></div>
+    <div class="metric"><div class="metric-label">Ring buffer 丢失</div><div class="metric-value green" id="droppedCount">—</div><div class="metric-note">reserve failures reported</div></div>
+    <div class="metric"><div class="metric-label">观测 CPU 数</div><div class="metric-value" id="cpuCount">—</div><div class="metric-note">CPUs present in trace</div></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><div class="panel-title">CPU 执行时间线</div><div class="panel-sub" id="timelineSub">导入采集器生成的 JSONL 文件，或载入合成演示数据</div></div><div class="legend"><span><i class="swatch"></i>进程运行区间</span><span>虚线边框：事件流可能不连续</span></div></div>
+    <div class="timeline-wrap"><canvas id="timeline" class="timeline"></canvas><div id="tooltip" class="tooltip"></div></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><div><div class="panel-title">进程运行统计</div><div class="panel-sub">依据相邻 sched_switch 事件估算；首尾区间可能不完整</div></div></div><div class="controls"><input class="search" id="filterInput" placeholder="筛选 PID / 进程名" autocomplete="off"></div></div>
+    <div class="table-wrap"><table><thead><tr><th>PID</th><th>进程</th><th>CPU 运行时间</th><th>被调度次数</th><th>唤醒延迟 P95</th><th>最大唤醒延迟</th></tr></thead><tbody id="processRows"><tr><td colspan="6" class="empty">等待导入调度事件</td></tr></tbody></table></div>
+  </section>
+  <div class="footer" id="footerStatus">No trace loaded · schema v1</div>
+</main>
+</div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const state = {records:[],summary:null,segments:[],processes:[],hits:[],demo:false};
+function quantile(values,q){if(!values.length)return null;const a=[...values].sort((x,y)=>x-y);return a[Math.max(0,Math.ceil(q*a.length)-1)];}
+function fmtNs(ns){if(ns===null||ns===undefined)return "—";if(ns>=1e9)return (ns/1e9).toFixed(2)+" s";if(ns>=1e6)return (ns/1e6).toFixed(2)+" ms";if(ns>=1e3)return (ns/1e3).toFixed(1)+" μs";return ns.toFixed(0)+" ns";}
+function colorFor(pid){let h=2166136261;for(const c of String(pid)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return "hsl("+((h>>>0)%360)+",62%,62%)";}
+function parseTrace(text){
+ const records=[];for(const [i,line] of text.split(/\r?\n/).entries()){if(!line.trim())continue;let r;try{r=JSON.parse(line);}catch(e){throw new Error("第 "+(i+1)+" 行 JSON 格式错误："+e.message);}if(!r||typeof r!=="object")throw new Error("第 "+(i+1)+" 行不是事件对象");records.push(r);}
+ const valid=records.filter(r=>r.type==="wakeup"||r.type==="switch");if(!valid.length)throw new Error("文件中没有 wakeup / switch 事件");
+ const bad=valid.find(r=>r.schema_version!==1||!Number.isFinite(Number(r.ts_ns)));if(bad)throw new Error("事件 schema 版本或 ts_ns 不符合 v1");
+ return records;
+}
+function buildModel(records){
+ const switches=records.filter(r=>r.type==="switch").sort((a,b)=>Number(a.ts_ns)-Number(b.ts_ns));
+ const wakeups=records.filter(r=>r.type==="wakeup");
+ const summary=records.filter(r=>r.type==="summary").reduce((a,r)=>({events:a.events+Number(r.events||0),dropped:a.dropped+Number(r.dropped||0),mapErrors:a.mapErrors+Number(r.map_update_failures||0)}),{events:0,dropped:0,mapErrors:0});
+ const byCpu=new Map(),segments=[],proc=new Map(),latencies=[],cpuSet=new Set();
+ let minTs=Infinity,maxTs=-Infinity,mismatches=0;
+ for(const e of switches){const cpu=Number(e.cpu);cpuSet.add(cpu);const ts=Number(e.ts_ns);minTs=Math.min(minTs,ts);maxTs=Math.max(maxTs,ts);
+  let active=byCpu.get(cpu);
+  if(active){const duration=Math.max(0,ts-active.start);if(duration>0){segments.push({...active,end:ts,duration,broken:Number(e.prev_pid)!==active.pid});if(Number(e.prev_pid)!==active.pid)mismatches++;const p=proc.get(String(active.pid))||{pid:active.pid,comm:active.comm,runtime:0,dispatches:0,latencies:[]};p.runtime+=duration;proc.set(String(active.pid),p);}}
+  const pid=Number(e.pid),comm=String(e.comm||("pid-"+pid));byCpu.set(cpu,{cpu,pid,comm,start:ts});
+  const p=proc.get(String(pid))||{pid,comm,runtime:0,dispatches:0,latencies:[]};p.comm=comm;p.dispatches++;if(e.wake_latency_ns!==null&&e.wake_latency_ns!==undefined){const n=Number(e.wake_latency_ns);if(Number.isFinite(n)&&n>=0){p.latencies.push(n);latencies.push(n);}}proc.set(String(pid),p);
+ }
+ for(const active of byCpu.values()){const duration=Math.max(0,maxTs-active.start);if(duration>0){segments.push({...active,end:maxTs,duration,broken:false,tail:true});const p=proc.get(String(active.pid));if(p)p.runtime+=duration;}}
+ const processes=[...proc.values()].map(p=>({...p,p95:quantile(p.latencies,.95),maxLatency:p.latencies.length?Math.max(...p.latencies):null})).sort((a,b)=>b.runtime-a.runtime);
+ return {switches,wakeups,summary,segments,processes,latencies,cpuCount:cpuSet.size,minTs,maxTs,mismatches};
+}
+function updateMetrics(model){
+ $("switchCount").textContent=model.switches.length.toLocaleString();
+ $("p95Latency").textContent=fmtNs(quantile(model.latencies,.95));
+ $("droppedCount").textContent=model.summary.dropped.toLocaleString();
+ $("cpuCount").textContent=model.cpuCount.toString();
+ $("timelineSub").textContent=model.switches.length+" 次切换 · "+model.wakeups.length+" 次唤醒 · 时间跨度 "+fmtNs(model.maxTs-model.minTs);
+ $("footerStatus").textContent="schema v1 · "+model.segments.length+" reconstructed CPU slices · "+model.mismatches+" continuity mismatches · map update failures "+model.summary.mapErrors;
+}
+function renderTable(){
+ const body=$("processRows");body.replaceChildren();const q=$("filterInput").value.trim().toLowerCase();
+ const rows=state.processes.filter(p=>String(p.pid).includes(q)||p.comm.toLowerCase().includes(q));
+ if(!rows.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=6;td.className="empty";td.textContent="没有匹配的进程";tr.append(td);body.append(tr);return;}
+ for(const p of rows){const tr=document.createElement("tr");const values=[p.pid,p.comm,fmtNs(p.runtime),p.dispatches,fmtNs(p.p95),fmtNs(p.maxLatency)];values.forEach((v,i)=>{const td=document.createElement("td");td.textContent=String(v);if(i===0)td.className="pid";tr.append(td);});body.append(tr);}
+}
+function roundedRect(ctx,x,y,w,h,r){const rr=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();}
+function drawTimeline(){
+ const canvas=$("timeline"),wrap=canvas.parentElement,w=Math.max(560,wrap.clientWidth),h=280,dpr=window.devicePixelRatio||1;
+ canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+"px";canvas.style.height=h+"px";
+ const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);ctx.fillStyle="#0a1422";ctx.fillRect(0,0,w,h);
+ const cpus=[...new Set(state.segments.map(s=>s.cpu))].sort((a,b)=>a-b),left=78,right=18,top=28,rowH=48,plotW=w-left-right;
+ state.hits=[];
+ if(!cpus.length){ctx.fillStyle="#8393aa";ctx.font="12px system-ui";ctx.fillText("暂无可重建的 CPU 区间",left,130);return;}
+ const min=state.model.minTs,max=Math.max(state.model.maxTs,min+1),span=max-min;
+ for(let i=0;i<=4;i++){const x=left+plotW*i/4;ctx.strokeStyle="#1e2d40";ctx.beginPath();ctx.moveTo(x,top-8);ctx.lineTo(x,top+cpus.length*rowH-7);ctx.stroke();ctx.fillStyle="#71839b";ctx.font="10px system-ui";ctx.fillText(fmtNs(span*i/4),x-16,15);}
+ cpus.forEach((cpu,index)=>{const y=top+index*rowH;ctx.fillStyle="#a8b8cc";ctx.font="11px system-ui";ctx.fillText("CPU "+cpu,12,y+18);ctx.strokeStyle="#1b2a3c";ctx.beginPath();ctx.moveTo(left,y+rowH-3);ctx.lineTo(w-right,y+rowH-3);ctx.stroke();});
+ const filter=$("filterInput").value.trim().toLowerCase();
+ for(const s of state.segments){if(filter&&!String(s.pid).includes(filter)&&!s.comm.toLowerCase().includes(filter))continue;const lane=cpus.indexOf(s.cpu);if(lane<0)continue;const x=left+(s.start-min)/span*plotW,x2=left+(s.end-min)/span*plotW,y=top+lane*rowH+7,bw=Math.max(2,x2-x),bh=23;
+  ctx.fillStyle=colorFor(s.pid);ctx.globalAlpha=.88;roundedRect(ctx,x,y,bw,bh,4);ctx.fill();ctx.globalAlpha=1;
+  if(s.broken){ctx.strokeStyle="#ffbe69";ctx.setLineDash([3,2]);ctx.strokeRect(x,y,bw,bh);ctx.setLineDash([]);}
+  if(bw>42){ctx.fillStyle="#07111e";ctx.font="10px system-ui";ctx.fillText(String(s.pid)+" "+s.comm,x+5,y+15,Math.max(0,bw-8));}
+  state.hits.push({x,y,w:bw,h:bh,s});
+ }
+}
+function render(){
+ if(!state.model)return;updateMetrics(state.model);renderTable();drawTimeline();
+ $("demoNotice").classList.toggle("hidden",!state.demo);
+}
+function loadText(text,isDemo){
+ const records=parseTrace(text);state.records=records;state.model=buildModel(records);state.segments=state.model.segments;state.processes=state.model.processes;state.demo=!!isDemo;render();
+}
+function demoData(){
+ const rows=[];const add=(type,ts,cpu,pid,comm,prev,latency,flags)=>rows.push({schema_version:1,type,ts_ns:ts,cpu,pid,tgid:pid,prio:120,prev_pid:prev||0,prev_tgid:prev||0,prev_state:0,wake_latency_ns:latency,flags:flags||0,comm});
+ const b=1000000000;
+ add("wakeup",b+1000000,0,101,"renderer",0,null,0);
+ add("switch",b+3000000,0,101,"renderer",0,2000000,1);
+ add("wakeup",b+5000000,0,102,"worker",101,null,0);
+ add("switch",b+9000000,0,102,"worker",101,4000000,1);
+ add("wakeup",b+11000000,1,201,"io-worker",0,null,0);
+ add("switch",b+13000000,1,201,"io-worker",0,2000000,1);
+ add("switch",b+17000000,0,101,"renderer",102,null,0);
+ add("wakeup",b+19000000,1,202,"logger",201,null,0);
+ add("switch",b+22000000,1,202,"logger",201,3000000,1);
+ add("switch",b+27000000,0,102,"worker",101,null,0);
+ add("wakeup",b+29000000,0,101,"renderer",102,null,0);
+ add("switch",b+31000000,0,101,"renderer",102,2000000,1);
+ add("switch",b+34000000,1,201,"io-worker",202,null,0);
+ add("wakeup",b+36000000,1,202,"logger",201,null,0);
+ add("switch",b+39000000,1,202,"logger",201,3000000,1);
+ add("switch",b+44000000,0,102,"worker",101,null,0);
+ add("switch",b+49000000,1,201,"io-worker",202,null,0);
+ rows.push({type:"summary",events:rows.length,dropped:0,map_update_failures:0});
+ return rows.map(r=>JSON.stringify(r)).join("\n");
+}
+$("fileInput").addEventListener("change",async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{loadText(await file.text(),false);}catch(err){alert(err.message);}e.target.value="";});
+$("demoButton").addEventListener("click",()=>{try{loadText(demoData(),true);}catch(err){alert(err.message);}});
+$("clearButton").addEventListener("click",()=>{state.records=[];state.model=null;state.segments=[];state.processes=[];state.demo=false;$("demoNotice").classList.add("hidden");["switchCount","p95Latency","droppedCount","cpuCount"].forEach(id=>$(id).textContent="—");$("timelineSub").textContent="导入采集器生成的 JSONL 文件，或载入合成演示数据";$("footerStatus").textContent="No trace loaded · schema v1";$("processRows").innerHTML='<tr><td colspan="6" class="empty">等待导入调度事件</td></tr>';drawTimeline();});
+$("filterInput").addEventListener("input",()=>{renderTable();drawTimeline();});
+$("timeline").addEventListener("mousemove",e=>{const rect=e.currentTarget.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;const hit=[...state.hits].reverse().find(h=>x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h);const tip=$("tooltip");if(!hit){tip.style.display="none";return;}const s=hit.s;tip.style.display="block";tip.style.left=Math.min(x+12,rect.width-210)+"px";tip.style.top=Math.max(4,y-38)+"px";tip.textContent="CPU "+s.cpu+" · PID "+s.pid+" · "+s.comm+" · "+fmtNs(s.duration)+(s.broken?" · continuity gap":"");});
+$("timeline").addEventListener("mouseleave",()=>$("tooltip").style.display="none");
+window.addEventListener("resize",()=>{if(state.model)drawTimeline();});
+drawTimeline();
+</script>
+</body>
+</html>
