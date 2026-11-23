@@ -17,7 +17,7 @@ The measured interval is from the observed wakeup tracepoint to the next observe
 
 ## Build
 
-    ./scripts/check_linux_env.sh
+    bash scripts/check_linux_env.sh
     make check-deps
     make
 
@@ -36,7 +36,7 @@ Generate a controlled workload in another terminal. Stop the collector with Ctrl
     python3 tools/analyze_trace.py trace.jsonl
     python3 -m unittest discover -s tests -v
 
-The collector writes event records to stdout and diagnostics to stderr. The final JSONL summary includes the number of emitted events and ring-buffer reservation failures.
+The collector writes event records to stdout and diagnostics to stderr. The final JSONL summary includes emitted events, ring-buffer reservation failures, and wakeup-map update failures.
 
 ## Validation protocol
 
@@ -51,9 +51,9 @@ The collector writes event records to stdout and diagnostics to stderr. The fina
 
 ## Known limitations
 
-- The prototype keeps one wakeup timestamp per host PID; repeated wakeups overwrite the prior timestamp.
-- PID reuse, namespace interpretation, task exit before switch-in, and long-lived unmatched entries need lifecycle cleanup and tests.
-- BPF ring-buffer drops are counted, but hash-map update failures are not separately counted.
+- The prototype keeps one wakeup timestamp per host PID; repeated wakeups overwrite the prior timestamp. A sched_process_exit hook removes the entry when the task exits.
+- PID reuse and namespace interpretation still require validation on the target kernel.
+- BPF ring-buffer drops and wakeup-map update failures are counted separately in the final summary.
 - No per-task run-time accounting, scheduler class identification, cgroup attribution, CPU migration analysis, or trace clock conversion yet.
 - tp_btf availability is kernel/configuration dependent; a successful source build is not proof of successful attach.
 - This source has not yet been built or executed against the user's Linux host. Treat it as an implementation candidate pending compilation and runtime validation.
