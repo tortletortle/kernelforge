@@ -10,7 +10,7 @@ SKEL := $(BUILD)/kernelforge.skel.h
 OBSERVER := $(BUILD)/kernelforge-observer
 ARCH_INCLUDE := /usr/include/$(ARCH)-linux-gnu
 
-.PHONY: all clean check-deps test-python
+.PHONY: all clean check-deps test-python test-sim test
 all: $(OBSERVER)
 
 check-deps:
@@ -40,6 +40,15 @@ $(OBSERVER): src/linux_observer.c include/kf_event.h $(SKEL) | check-deps
 
 test-python:
 	python3 -m unittest discover -s tests -v
+
+test-sim:
+	node test.mjs
+	node test-v2.mjs
+	node test-v3.mjs
+	node test-v4.mjs
+	node test-v5.mjs
+
+test: test-python test-sim
 
 clean:
 	rm -rf $(BUILD)
