@@ -25,10 +25,25 @@ struct {
     __type(value, __u64);
 } dropped SEC(".maps");
 
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} map_errors SEC(".maps");
+
 static __always_inline void count_drop(void)
 {
     __u32 key = 0;
     __u64 *count = bpf_map_lookup_elem(&dropped, &key);
+    if (count)
+        (*count)++;
+}
+
+static __always_inline void count_map_error(void)
+{
+    __u32 key = 0;
+    __u64 *count = bpf_map_lookup_elem(&map_errors, &key);
     if (count)
         (*count)++;
 }
@@ -45,7 +60,8 @@ static __always_inline void emit_wakeup(struct task_struct *task, __u32 flags)
     if (pid == 0)
         return;
 
-    bpf_map_update_elem(&wakeup_ts, &pid, &now, BPF_ANY);
+    if (bpf_map_update_elem(&wakeup_ts, &pid, &now, BPF_ANY) != 0)
+        count_map_error();
     event = bpf_ringbuf_reserve(&events, sizeof(*event), 0);
     if (!event) {
         count_drop();
@@ -76,6 +92,16 @@ SEC("tp_btf/sched_wakeup_new")
 int BPF_PROG(on_sched_wakeup_new, struct task_struct *task)
 {
     emit_wakeup(task, KF_FLAG_WAKEUP_NEW);
+    return 0;
+}
+
+SEC("tp_btf/sched_process_exit")
+int BPF_PROG(on_sched_process_exit, struct task_struct *task)
+{
+    if (task) {
+        __u32 pid = BPF_CORE_READ(task, pid);
+        bpf_map_delete_elem(&wakeup_ts, &pid);
+    }
     return 0;
 }
 
