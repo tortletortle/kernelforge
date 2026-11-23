@@ -1,37 +1,46 @@
 # KernelForge
 
-AI-oriented operating system experimentation workbench (v0.1 core).
+AI-oriented operating-system experimentation workbench. Current development combines a deterministic scheduler simulator, risk-aware policy experiments, a read-only Linux scheduler observer candidate, and an offline trace viewer.
 
-## Reproduce
+## Current status
 
-Node.js 18+; no dependencies.
+- **Simulator:** FCFS, RR, MLFQ, synthetic context-switch/migration overhead, deterministic workloads, snapshots, and paired benchmark suites.
+- **Risk-aware scheduler research:** experimental only. MLFQ remains the default baseline; the adaptive controller has not demonstrated general superiority.
+- **Linux observer:** eBPF/libbpf source candidate for sched_wakeup, sched_wakeup_new, sched_switch, and sched_process_exit. It is read-only and does not patch or alter scheduling.
+- **Trace analysis:** JSONL analyzer and offline HTML timeline viewer.
+- **Not implemented/validated:** real kernel hotpatch/livepatch, AI-generated kernel patch execution, QEMU isolation integration, and validated performance improvements on real Linux.
 
-```sh
-node test.mjs
-```
+## Reproduce tests
 
-The entry point runs 83 verification scenarios: two exact timing fixtures, twenty seeded workloads under FCFS/RR/MLFQ and a runtime RR→MLFQ→RR policy change (ticks 120 and 240), plus a determinism check. Each workload contains 60 jobs. Invariants are checked after each simulated tick and policy migration. The tests compare accounted CPU work, turnaround decomposition and completion.
+Node.js 18+ and Python 3.10+; no third-party Python packages are required.
 
-## Scope
+    make test
 
-Single virtual CPU; integer tick time; alternating CPU and I/O bursts; concurrent independent I/O delays; no actual CPU context-switch cost. Context switch counter counts consecutive busy ticks running different jobs (not idle transitions). MLFQ uses quanta 2/4/8 and periodic priority boosts every 24 ticks. Switching policies resets policy-specific priority and quantum metadata while preserving job work and accumulated waiting. Switching back is not a state rollback. P99 uses nearest-rank per workload and results average these per-workload quantiles.
+This runs the simulator verification suites, trace-viewer fixtures, and Python trace-analyzer tests. Individual simulator entry points include test.mjs and test-v2.mjs through test-v5.mjs.
 
-This is not a real Linux kernel, eBPF program or livepatch engine. No claims about real Linux performance or global superiority are supported. AI-assisted diagnosis, front end, snapshots, Linux/QEMU integration and realistic overhead measurements remain future work.
+## Build the Linux observer
 
-## Next milestone
+Requires a Linux kernel exposing BTF at /sys/kernel/btf/vmlinux, tp_btf support for the selected scheduler tracepoints, clang/LLVM with BPF target, bpftool, libbpf development files, and permission to load BPF programs.
 
-Separate workload generator and benchmark harness; add workload families, load sweeps, overhead modeling, state snapshots, randomized switching and adversarial cases before introducing visual or real-kernel integration.
+    bash scripts/check_linux_env.sh
+    make check-deps
+    make
 
+The current development environment has not successfully compiled or attached this observer. See [Linux observer build and validation](docs/linux-observer.md) and [V0.6 validation status](docs/v0.6-validation.md).
 
-## V0.6: read-only Linux scheduler observer
+Capture a trace on an isolated Linux VM or suitable WSL kernel:
 
-A first eBPF/libbpf observer prototype is available under `bpf/`, `src/linux_observer.c`, and `include/`. It captures scheduler wakeup/switch events, emits JSONL, and analyzes wake-to-run latency. It is observational only: it does not change scheduling policy or patch the kernel.
+    sudo ./build/kernelforge-observer > trace.jsonl
+    python3 tools/analyze_trace.py trace.jsonl
 
-See [Linux observer build and validation](docs/linux-observer.md). The BPF source has not yet been compiled or attached on the target Linux host; treat it as an implementation candidate pending build and runtime validation.
+## Offline visualization
 
-Python analyzer tests: `python3 -m unittest discover -s tests -v`.
+Open web/trace-viewer.html in a modern browser and import the JSONL file. The built-in demo is synthetic and explicitly labeled. The viewer reconstructs approximate per-CPU execution slices from adjacent switch events; first/last intervals may be partial and continuity gaps are surfaced. See [trace viewer semantics](docs/trace-viewer.md).
 
+## Simulator model boundaries
 
-## Offline trace viewer
+The simulator is a single virtual CPU with integer ticks and alternating CPU/I/O bursts. Its context-switch and migration costs are synthetic parameters, not measured hardware latencies. Results from generated workloads do not establish real Linux performance or general algorithm superiority. See the versioned experiment reports under docs/.
 
-Open `web/trace-viewer.html` in a browser and import the JSONL emitted by the read-only observer. The built-in demo is synthetic and explicitly labeled. See [viewer semantics](docs/trace-viewer.md). It reconstructs approximate per-CPU run slices from adjacent switch events; incomplete trace boundaries and continuity gaps are marked rather than treated as exact runtime data.
+## Safety boundary
+
+The Linux observer is read-only. Do not enable scheduler changes, kernel modules, livepatch, or AI-generated kernel code until build, verifier, attach, loss accounting, observer-overhead, and independent trace-comparison tests pass on a disposable Linux environment.
