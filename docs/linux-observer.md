@@ -15,6 +15,15 @@ The measured interval is from the observed wakeup tracepoint to the next observe
 - Permission to load and attach BPF programs. Depending on kernel and distribution, this may require root or capabilities such as CAP_BPF and CAP_PERFMON; lockdown, LSM policy, kernel config, and container restrictions may still prevent attachment.
 - The Makefile currently targets x86_64 and aarch64 Linux.
 
+## Ubuntu / WSL2 dependencies
+
+On Ubuntu 24.04, install the userspace toolchain:
+
+    sudo apt update
+    sudo apt install -y clang llvm bpftool libbpf-dev libelf-dev zlib1g-dev build-essential pkg-config python3
+
+Then run the environment check. WSL2 kernels do not all expose the BTF data required by CO-RE; if /sys/kernel/btf/vmlinux is absent, stop here. Do not generate vmlinux.h from a different kernel and assume it matches the running WSL kernel. Use a Linux VM/kernel with BTF enabled or build/configure a WSL kernel that provides BTF.
+
 ## Build
 
     bash scripts/check_linux_env.sh
