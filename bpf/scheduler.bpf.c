@@ -96,8 +96,11 @@ int BPF_PROG(on_sched_wakeup_new, struct task_struct *task)
 }
 
 SEC("tp_btf/sched_process_exit")
-int BPF_PROG(on_sched_process_exit, struct task_struct *task)
+int BPF_PROG(on_sched_process_exit,
+             struct task_struct *task,
+             bool group_dead)
 {
+    (void)group_dead;
     if (task) {
         __u32 pid = BPF_CORE_READ(task, pid);
         bpf_map_delete_elem(&wakeup_ts, &pid);
