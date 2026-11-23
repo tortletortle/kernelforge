@@ -1,0 +1,31 @@
+name: KernelForge tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  simulator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run simulator verification suites
+        run: |
+          node test.mjs
+          node test-v2.mjs
+          node test-v3.mjs
+          node test-v4.mjs
+          node test-v5.mjs
+
+  trace-analyzer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run JSONL analyzer tests
+        run: python -m unittest discover -s tests -v
