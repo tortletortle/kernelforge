@@ -77,7 +77,7 @@ static int handle_event(void *ctx, void *data, size_t data_sz)
     return 0;
 }
 
-static unsigned long long read_dropped(struct kernelforge_bpf *skel)
+static unsigned long long read_percpu_counter(struct bpf_map *map)
 {
     int cpu_count = libbpf_num_possible_cpus();
     unsigned int key = 0;
@@ -89,8 +89,7 @@ static unsigned long long read_dropped(struct kernelforge_bpf *skel)
     per_cpu = calloc((size_t)cpu_count, sizeof(*per_cpu));
     if (!per_cpu)
         return 0;
-
-    if (bpf_map_lookup_elem(bpf_map__fd(skel->maps.dropped), &key, per_cpu) == 0) {
+    if (bpf_map_lookup_elem(bpf_map__fd(map), &key, per_cpu) == 0) {
         for (int i = 0; i < cpu_count; i++)
             total += per_cpu[i];
     }
@@ -146,8 +145,11 @@ int main(void)
         }
     }
 
-    printf("{\"type\":\"summary\",\"events\":%llu,\"dropped\":%llu}\n",
-           event_count, read_dropped(skel));
+    printf("{\"type\":\"summary\",\"events\":%llu,\"dropped\":%llu,"
+           "\"map_update_failures\":%llu}\n",
+           event_count,
+           read_percpu_counter(skel->maps.dropped),
+           read_percpu_counter(skel->maps.map_errors));
 
 cleanup:
     if (ring)
