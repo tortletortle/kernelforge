@@ -15,7 +15,7 @@ class AnalyzeTraceTests(unittest.TestCase):
             {"type": "switch", "cpu": 0, "pid": 7, "wake_latency_ns": 10},
             {"type": "switch", "cpu": 0, "pid": 8, "wake_latency_ns": 20},
             {"type": "switch", "cpu": 1, "pid": 7, "wake_latency_ns": None},
-            {"type": "summary", "events": 4, "dropped": 1},
+            {"type": "summary", "events": 4, "dropped": 1, "map_update_failures": 2},
         ]
         result = MODULE.analyze_records(records)
         self.assertEqual(result["matched_wakeup_to_run_samples"], 2)
@@ -23,6 +23,7 @@ class AnalyzeTraceTests(unittest.TestCase):
         self.assertEqual(result["wakeup_to_run_latency_ns"]["p99"], 20)
         self.assertEqual(result["switches_by_cpu"], {"0": 2, "1": 1})
         self.assertEqual(result["ring_buffer_dropped"], 1)
+        self.assertEqual(result["wakeup_map_update_failures"], 2)
         self.assertIn("Incomplete trace", result["warning"])
 
     def test_empty_trace(self):
