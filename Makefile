@@ -10,7 +10,7 @@ SKEL := $(BUILD)/kernelforge.skel.h
 OBSERVER := $(BUILD)/kernelforge-observer
 ARCH_INCLUDE := /usr/include/$(ARCH)-linux-gnu
 
-.PHONY: all clean check-deps
+.PHONY: all clean check-deps test-python
 all: $(OBSERVER)
 
 check-deps:
@@ -37,6 +37,9 @@ $(SKEL): $(BPF_OBJ)
 $(OBSERVER): src/linux_observer.c include/kf_event.h $(SKEL) | check-deps
 	$(CC) -O2 -g -Wall -Wextra -Iinclude -I$(BUILD) \
 		$< -o $@ $$( $(PKG_CONFIG) --cflags --libs libbpf )
+
+test-python:
+	python3 -m unittest discover -s tests -v
 
 clean:
 	rm -rf $(BUILD)
